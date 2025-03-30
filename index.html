@@ -508,11 +508,22 @@
                 addModal.style.display = 'flex';
             });
 
+            addBtn.addEventListener('touchend', function(event) {
+                event.preventDefault();
+                addModal.style.display = 'flex';
+            });
+
             // Close modal
             closeModal.addEventListener('click', function() {
                 addModal.style.display = 'none';
             });
 
+            // Also close modal on touchend (for mobile devices)
+            closeModal.addEventListener('touchend', function(event) {
+                event.preventDefault();
+                addModal.style.display = 'none';
+            });
+            
             // Close modal when clicking outside
             window.addEventListener('click', function(event) {
                 if (event.target === addModal) {
