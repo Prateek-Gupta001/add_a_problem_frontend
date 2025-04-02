@@ -131,6 +131,7 @@
             -webkit-tap-highlight-color: transparent; /* Remove tap highlight on mobile */
             touch-action: manipulation; /* Improve touch behavior */
             user-select: none; /* Prevent text selection */
+            outline: none; /* Remove outline */
         }
 
         .add-btn:hover, .add-btn:active {
@@ -351,12 +352,17 @@
                 padding: 1.5rem;
             }
             
-            /* Add specific mobile styling for the add button */
+            /* Improved mobile styling for the add button */
             .add-btn {
                 width: 3.5rem;
                 height: 3.5rem;
                 bottom: 1.5rem;
                 right: 1.5rem;
+                /* Ensure the button is clickable */
+                z-index: 101;
+                transform: translateZ(0);
+                will-change: transform;
+                -webkit-tap-highlight-color: transparent;
             }
         }
 
@@ -434,6 +440,19 @@
             font-size: 1rem;
             opacity: 0.9;
         }
+
+        /* Debug element for mobile */
+        .debug-message {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            background-color: rgba(0,0,0,0.7);
+            color: white;
+            padding: 5px;
+            z-index: 10000;
+            max-width: 80%;
+            word-wrap: break-word;
+        }
     </style>
 </head>
 <body>
@@ -451,7 +470,8 @@
         </div>
     </div>
 
-    <button class="add-btn" id="addBtn" aria-label="Add problem">
+    <!-- Added role="button" and tabindex for better accessibility -->
+    <button class="add-btn" id="addBtn" aria-label="Add problem" role="button" tabindex="0">
         <i class="fas fa-plus"></i>
     </button>
 
@@ -511,6 +531,23 @@
             const emailGroup = document.getElementById('emailGroup');
             const cookiePopup = document.getElementById('cookiePopup');
             const errorPopup = document.getElementById('errorPopup');
+            
+            // Debug function for mobile
+            function debugLog(message) {
+                console.log(message);
+                // Uncomment for visual debugging on mobile
+                /*
+                const debugElement = document.createElement('div');
+                debugElement.className = 'debug-message';
+                debugElement.textContent = message;
+                document.body.appendChild(debugElement);
+                setTimeout(() => {
+                    if (document.body.contains(debugElement)) {
+                        document.body.removeChild(debugElement);
+                    }
+                }, 3000);
+                */
+            }
 
             // Toggle anonymous submission
             anonymousCheck.addEventListener('change', function() {
@@ -523,60 +560,66 @@
                 }
             });
 
-            // *** IMPROVED MOBILE BUTTON HANDLING ***
+            // *** COMPLETELY REFACTORED MOBILE BUTTON HANDLING ***
             
-            // Fix for the "+" button on mobile
+            // Function to open modal - extracted to ensure consistency
+            function openModal() {
+                debugLog("Opening modal");
+                addModal.style.display = 'flex';
+            }
+            
+            // Function to close modal - extracted to ensure consistency
+            function closeModalFn() {
+                debugLog("Closing modal");
+                addModal.style.display = 'none';
+            }
+            
+            // Simplify the event handling by using a single approach
+            // that works well on both desktop and mobile
+            
+            // Use simpler event handling approach - click works well for most devices
             addBtn.addEventListener('click', function(e) {
                 e.preventDefault();
-                e.stopPropagation();
-                console.log("Button clicked");
-                addModal.style.display = 'flex';
-                return false;
+                debugLog("Button clicked/tapped");
+                openModal();
             });
             
-            // Remove the touchstart event which may be causing conflicts
-            // Instead use a more mobile-friendly approach
+            // Add specific touch handling for iOS devices
+            addBtn.addEventListener('touchstart', function(e) {
+                debugLog("Touch started on button");
+            }, { passive: true });
+            
             addBtn.addEventListener('touchend', function(e) {
                 e.preventDefault();
-                e.stopPropagation();
-                console.log("Button touched");
-                addModal.style.display = 'flex';
-                return false;
-            }, { passive: false });
-
-            // Close modal - Improved event handling
+                debugLog("Touch ended on button");
+                openModal();
+            });
+            
+            // Close modal with click
             closeModal.addEventListener('click', function(e) {
                 e.preventDefault();
-                e.stopPropagation();
-                console.log("Close clicked");
-                addModal.style.display = 'none';
-                return false;
+                closeModalFn();
             });
             
-            // Use touchend instead of touchstart for better mobile experience
+            // Also handle touch events for closing
             closeModal.addEventListener('touchend', function(e) {
                 e.preventDefault();
-                e.stopPropagation();
-                console.log("Close touched");
-                addModal.style.display = 'none';
-                return false;
-            }, { passive: false });
+                closeModalFn();
+            });
             
-            // Close modal when clicking outside
+            // Close modal when clicking outside - kept simple
             window.addEventListener('click', function(event) {
                 if (event.target === addModal) {
-                    console.log("Outside click detected");
-                    addModal.style.display = 'none';
+                    closeModalFn();
                 }
             });
 
-            // Improved mobile handling for clicking outside modal
+            // Simple touch outside detection
             window.addEventListener('touchend', function(event) {
                 if (event.target === addModal) {
-                    console.log("Outside touch detected");
-                    addModal.style.display = 'none';
+                    closeModalFn();
                 }
-            }, { passive: true });
+            });
 
             // Format date
             function formatDate(dateString) {
@@ -655,18 +698,18 @@
                         popup.classList.add('show');
                     });
 
-                    // Set a longer timeout (6 seconds)
+                    // Set a reasonable timeout
                     setTimeout(() => {
                         // Start hide animation
                         popup.classList.remove('show');
                         
                         // Wait for hide animation to complete before resolving
-                        setTimeout(resolve, 1000);
-                    }, 6000);
+                        setTimeout(resolve, 600);
+                    }, 4000);
                 });
             }
 
-            // Add this function to show error messages
+            // Show error messages
             function showErrorPopup(title, message) {
                 return new Promise(resolve => {
                     const popup = document.createElement('div');
@@ -685,18 +728,20 @@
                         popup.classList.add('show');
                     });
 
-                    // Hide and remove after 5 seconds
+                    // Hide and remove after a few seconds
                     setTimeout(() => {
                         popup.classList.remove('show');
                         setTimeout(() => {
-                            document.body.removeChild(popup);
+                            if (document.body.contains(popup)) {
+                                document.body.removeChild(popup);
+                            }
                             resolve();
                         }, 600);
-                    }, 5000);
+                    }, 4000);
                 });
             }
 
-            // Update the form submission handler
+            // Form submission handler
             problemForm.addEventListener('submit', async function(event) {
                 event.preventDefault();
                 
@@ -745,7 +790,7 @@
                     
                     // Reset form and close modal
                     problemForm.reset();
-                    addModal.style.display = 'none';
+                    closeModalFn();
                     
                     // Show success cookie popup and wait for it to complete
                     await showCookiePopup();
@@ -764,40 +809,44 @@
                 }
             });
 
-            // Add debugging to identify mobile issues
-            window.addEventListener('error', function(e) {
-                console.error('Global error:', e.message, e.filename, e.lineno);
+            // Add keyboard accessibility
+            addBtn.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    openModal();
+                }
             });
             
-            // Add visible console logs for mobile debugging
-            function showDebugMessage(message) {
-                console.log(message);
-                // You can uncomment this to show visual debug messages on mobile
-                /*
-                const debugElement = document.createElement('div');
-                debugElement.style.position = 'fixed';
-                debugElement.style.top = '10px';
-                debugElement.style.left = '10px';
-                debugElement.style.backgroundColor = 'rgba(0,0,0,0.7)';
-                debugElement.style.color = 'white';
-                debugElement.style.padding = '5px';
-                debugElement.style.zIndex = '10000';
-                debugElement.textContent = message;
-                document.body.appendChild(debugElement);
-                setTimeout(() => document.body.removeChild(debugElement), 3000);
-                */
-            }
+            closeModal.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    closeModalFn();
+                }
+            });
             
+            // Add event for Escape key to close modal
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && addModal.style.display === 'flex') {
+                    closeModalFn();
+                }
+            });
+
             // Initial load
             loadProblems();
             
-            // Add this to debug mobile interactions
-            addBtn.addEventListener('touchstart', function() {
-                showDebugMessage('Touch started on button');
-            });
-            
             // Log when the page is fully loaded
-            showDebugMessage('Page fully loaded');
+            debugLog('Page fully loaded and initialized');
+            
+            // Ensure the add button is visible and working
+            addBtn.style.display = 'flex';
+            
+            // Force a repaint on mobile devices
+            setTimeout(() => {
+                addBtn.style.opacity = '0.99';
+                setTimeout(() => {
+                    addBtn.style.opacity = '1';
+                }, 10);
+            }, 100);
         });
     </script>
 </body>
