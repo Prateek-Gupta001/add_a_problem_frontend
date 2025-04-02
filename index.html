@@ -130,10 +130,11 @@
             z-index: 100;
             -webkit-tap-highlight-color: transparent; /* Remove tap highlight on mobile */
             touch-action: manipulation; /* Improve touch behavior */
+            user-select: none; /* Prevent text selection */
         }
 
-        .add-btn:hover {
-            transform: scale(1.1) rotate(90deg);
+        .add-btn:hover, .add-btn:active {
+            transform: scale(1.1);
         }
 
         .modal {
@@ -349,6 +350,14 @@
                 min-width: 280px;
                 padding: 1.5rem;
             }
+            
+            /* Add specific mobile styling for the add button */
+            .add-btn {
+                width: 3.5rem;
+                height: 3.5rem;
+                bottom: 1.5rem;
+                right: 1.5rem;
+            }
         }
 
         /* Add these new styles for the checkbox group */
@@ -514,41 +523,57 @@
                 }
             });
 
-            // Open modal - Improved event handling for mobile
-            function openModal(e) {
-                if (e) {
-                    e.preventDefault(); // Prevent default for both click and touch events
-                }
+            // *** IMPROVED MOBILE BUTTON HANDLING ***
+            
+            // Fix for the "+" button on mobile
+            addBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log("Button clicked");
                 addModal.style.display = 'flex';
-            }
-
-            // Add multiple event listeners to ensure compatibility
-            addBtn.addEventListener('click', openModal);
-            addBtn.addEventListener('touchstart', openModal, { passive: false });
+                return false;
+            });
+            
+            // Remove the touchstart event which may be causing conflicts
+            // Instead use a more mobile-friendly approach
+            addBtn.addEventListener('touchend', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log("Button touched");
+                addModal.style.display = 'flex';
+                return false;
+            }, { passive: false });
 
             // Close modal - Improved event handling
-            function closeModalFunction(e) {
-                if (e) {
-                    e.preventDefault(); // Prevent default
-                    e.stopPropagation(); // Stop propagation
-                }
+            closeModal.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log("Close clicked");
                 addModal.style.display = 'none';
-            }
-
-            // Add multiple event listeners to ensure compatibility
-            closeModal.addEventListener('click', closeModalFunction);
-            closeModal.addEventListener('touchstart', closeModalFunction, { passive: false });
+                return false;
+            });
+            
+            // Use touchend instead of touchstart for better mobile experience
+            closeModal.addEventListener('touchend', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log("Close touched");
+                addModal.style.display = 'none';
+                return false;
+            }, { passive: false });
             
             // Close modal when clicking outside
             window.addEventListener('click', function(event) {
                 if (event.target === addModal) {
+                    console.log("Outside click detected");
                     addModal.style.display = 'none';
                 }
             });
 
-            // Also add touch event for closing when clicking outside
-            window.addEventListener('touchstart', function(event) {
+            // Improved mobile handling for clicking outside modal
+            window.addEventListener('touchend', function(event) {
                 if (event.target === addModal) {
+                    console.log("Outside touch detected");
                     addModal.style.display = 'none';
                 }
             }, { passive: true });
@@ -744,8 +769,35 @@
                 console.error('Global error:', e.message, e.filename, e.lineno);
             });
             
+            // Add visible console logs for mobile debugging
+            function showDebugMessage(message) {
+                console.log(message);
+                // You can uncomment this to show visual debug messages on mobile
+                /*
+                const debugElement = document.createElement('div');
+                debugElement.style.position = 'fixed';
+                debugElement.style.top = '10px';
+                debugElement.style.left = '10px';
+                debugElement.style.backgroundColor = 'rgba(0,0,0,0.7)';
+                debugElement.style.color = 'white';
+                debugElement.style.padding = '5px';
+                debugElement.style.zIndex = '10000';
+                debugElement.textContent = message;
+                document.body.appendChild(debugElement);
+                setTimeout(() => document.body.removeChild(debugElement), 3000);
+                */
+            }
+            
             // Initial load
             loadProblems();
+            
+            // Add this to debug mobile interactions
+            addBtn.addEventListener('touchstart', function() {
+                showDebugMessage('Touch started on button');
+            });
+            
+            // Log when the page is fully loaded
+            showDebugMessage('Page fully loaded');
         });
     </script>
 </body>
