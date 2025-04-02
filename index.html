@@ -128,6 +128,8 @@
             transition: var(--transition);
             border: none;
             z-index: 100;
+            -webkit-tap-highlight-color: transparent; /* Remove tap highlight on mobile */
+            touch-action: manipulation; /* Improve touch behavior */
         }
 
         .add-btn:hover {
@@ -180,6 +182,8 @@
             cursor: pointer;
             color: var(--text-secondary);
             transition: var(--transition);
+            -webkit-tap-highlight-color: transparent; /* Remove tap highlight on mobile */
+            touch-action: manipulation; /* Improve touch behavior */
         }
 
         .close-btn:hover {
@@ -231,6 +235,8 @@
             width: 100%;
             text-transform: uppercase;
             letter-spacing: 0.05em;
+            -webkit-tap-highlight-color: transparent; /* Remove tap highlight on mobile */
+            touch-action: manipulation; /* Improve touch behavior */
         }
 
         .submit-btn:hover {
@@ -338,6 +344,11 @@
             .modal-content {
                 padding: 1.5rem;
             }
+            
+            .cookie-popup, .error-popup {
+                min-width: 280px;
+                padding: 1.5rem;
+            }
         }
 
         /* Add these new styles for the checkbox group */
@@ -431,13 +442,13 @@
         </div>
     </div>
 
-    <button class="add-btn" id="addBtn">
+    <button class="add-btn" id="addBtn" aria-label="Add problem">
         <i class="fas fa-plus"></i>
     </button>
 
     <div class="modal" id="addModal">
         <div class="modal-content">
-            <button class="close-btn" id="closeModal">
+            <button class="close-btn" id="closeModal" aria-label="Close modal">
                 <i class="fas fa-times"></i>
             </button>
             <h2>Share Your Inconvenience</h2>
@@ -503,26 +514,30 @@
                 }
             });
 
-            // Open modal
-            addBtn.addEventListener('click', function() {
+            // Open modal - Improved event handling for mobile
+            function openModal(e) {
+                if (e) {
+                    e.preventDefault(); // Prevent default for both click and touch events
+                }
                 addModal.style.display = 'flex';
-            });
+            }
 
-            addBtn.addEventListener('touchend', function(event) {
-                event.preventDefault();
-                addModal.style.display = 'flex';
-            });
+            // Add multiple event listeners to ensure compatibility
+            addBtn.addEventListener('click', openModal);
+            addBtn.addEventListener('touchstart', openModal, { passive: false });
 
-            // Close modal
-            closeModal.addEventListener('click', function() {
+            // Close modal - Improved event handling
+            function closeModalFunction(e) {
+                if (e) {
+                    e.preventDefault(); // Prevent default
+                    e.stopPropagation(); // Stop propagation
+                }
                 addModal.style.display = 'none';
-            });
+            }
 
-            // Also close modal on touchend (for mobile devices)
-            closeModal.addEventListener('touchend', function(event) {
-                event.preventDefault();
-                addModal.style.display = 'none';
-            });
+            // Add multiple event listeners to ensure compatibility
+            closeModal.addEventListener('click', closeModalFunction);
+            closeModal.addEventListener('touchstart', closeModalFunction, { passive: false });
             
             // Close modal when clicking outside
             window.addEventListener('click', function(event) {
@@ -530,6 +545,13 @@
                     addModal.style.display = 'none';
                 }
             });
+
+            // Also add touch event for closing when clicking outside
+            window.addEventListener('touchstart', function(event) {
+                if (event.target === addModal) {
+                    addModal.style.display = 'none';
+                }
+            }, { passive: true });
 
             // Format date
             function formatDate(dateString) {
@@ -540,6 +562,13 @@
             // Load all problems
             async function loadProblems() {
                 try {
+                    problemList.innerHTML = `
+                        <div class="loading">
+                            <i class="fas fa-spinner"></i>
+                            <p>Loading problems...</p>
+                        </div>
+                    `;
+                    
                     const response = await fetch('https://addaproblem-production.up.railway.app/get_all_entries');
                     if (!response.ok) {
                         throw new Error(`HTTP error! status: ${response.status}`);
@@ -708,6 +737,11 @@
                     submitBtn.disabled = false;
                     submitBtn.textContent = 'Share Problem';
                 }
+            });
+
+            // Add debugging to identify mobile issues
+            window.addEventListener('error', function(e) {
+                console.error('Global error:', e.message, e.filename, e.lineno);
             });
             
             // Initial load
